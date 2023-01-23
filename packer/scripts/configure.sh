@@ -8,7 +8,7 @@ if [[ "${TRACE-0}" == "1" ]]; then
     set -o xtrace
 fi
 
-yum update -y --security --skip-broken
+yum update -y --security --skip-broken && yum install  -y jq
 
 cd /opt
 

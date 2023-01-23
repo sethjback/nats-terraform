@@ -33,7 +33,7 @@ source "amazon-ebs" "nats" {
     instance_type = "${var.instance_type}"
     ssh_username = "ec2-user"
     tags = {
-        Name = "packer builder"
+        Name = "nats-server"
     }
 }
 
