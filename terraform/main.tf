@@ -9,9 +9,7 @@ terraform {
 
 provider "aws" {}
 
-data "aws_region" "current" {
-  
-}
+data "aws_region" "current" {}
 
 data "aws_ami" "nats-server" {
   most_recent = true
@@ -35,6 +33,9 @@ data "aws_subnets" "target" {
     name   = "vpc-id"
     values = [local.vpc_id]
   }
+  depends_on = [
+    module.vpc
+  ]
 }
 
 data "aws_vpc" "provided" {
@@ -48,6 +49,9 @@ data "template_file" "init" {
   vars = {
     SERVER_INDEX = "${count.index}"
     SERVER_REGION = "${data.aws_region.current.name}"
+    OPERATOR_JWT = "${var.operator_jwt}"
+    SYSTEM_ACCOUNT_ID = "${var.system_account_id}"
+    SYSTEM_ACCOUNT_JWT = "${var.system_account_jwt}"
   }
 }
 
@@ -56,10 +60,11 @@ locals {
   vpc_id     = local.create_vpc ? module.vpc.vpc_id : data.aws_vpc.provided[0].id
 }
 
-resource "random_id" "index" {
-  byte_length = 2
+resource "random_shuffle" "subnet_id" {
+  count = var.server_count
+  input = data.aws_subnets.target.ids
+  result_count = 1
 }
-
 resource "aws_security_group" "nats-ingress" {
   name        = "nats-server-ingress"
   description = "Allow inbound nats ports"
@@ -165,7 +170,7 @@ resource "aws_instance" "nats-server" {
   count                  = var.server_count
   ami                    = data.aws_ami.nats-server.id
   instance_type          = var.instance_type
-  subnet_id              = data.aws_subnets.target.ids[random_id.index.dec % length(data.aws_subnets.target.ids)]
+  subnet_id              = resource.random_shuffle.subnet_id[count.index].result[0]
   vpc_security_group_ids = [resource.aws_security_group.nats-ingress.id]
   iam_instance_profile   = aws_iam_instance_profile.nats-server.name
   lifecycle {
@@ -176,4 +181,7 @@ resource "aws_instance" "nats-server" {
     TF_DEPLOYED_NATS = "nats${count.index}"
   }
   user_data = data.template_file.init[count.index].rendered
+  depends_on = [
+    module.vpc
+  ]
 }
