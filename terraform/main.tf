@@ -35,6 +35,9 @@ data "aws_subnets" "target" {
     name   = "vpc-id"
     values = [local.vpc_id]
   }
+  depends_on = [
+    module.vpc
+  ]
 }
 
 data "aws_vpc" "provided" {
@@ -48,6 +51,9 @@ data "template_file" "init" {
   vars = {
     SERVER_INDEX = "${count.index}"
     SERVER_REGION = "${data.aws_region.current.name}"
+    OPERATOR_JWT = "${var.operator_jwt}"
+    SYSTEM_ACCOUNT_ID = "${var.system_account_id}"
+    SYSTEM_ACCOUNT_JWT = "${var.system_account_jwt}"
   }
 }
 
@@ -168,6 +174,9 @@ resource "aws_instance" "nats-server" {
   subnet_id              = data.aws_subnets.target.ids[random_id.index.dec % length(data.aws_subnets.target.ids)]
   vpc_security_group_ids = [resource.aws_security_group.nats-ingress.id]
   iam_instance_profile   = aws_iam_instance_profile.nats-server.name
+  metadata_options {
+    instance_metadata_tags = true
+  }
   lifecycle {
     ignore_changes = [subnet_id]
   }
@@ -176,4 +185,7 @@ resource "aws_instance" "nats-server" {
     TF_DEPLOYED_NATS = "nats${count.index}"
   }
   user_data = data.template_file.init[count.index].rendered
+  depends_on = [
+    module.vpc
+  ]
 }

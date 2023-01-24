@@ -9,9 +9,23 @@ EOL
 done
 
 cat > /tmp/nats.config <<EOL
+operator: ${OPERATOR_JWT}
+system_account: ${SYSTEM_ACCOUNT_ID}
 port: 4222
 http_port: 8222
 server_name: nats-server${SERVER_INDEX}
+
+resolver {
+    type: full
+    dir: /mnt/data/jwt
+    allow_delete: true
+    interval: "2m"
+    timeout: "1.9s"
+}
+
+resolver_preload {
+    ${SYSTEM_ACCOUNT_ID}: ${SYSTEM_ACCOUNT_JWT}
+}
 
 jetstream {
     store_dir: /mnt/data
