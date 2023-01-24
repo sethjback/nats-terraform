@@ -9,9 +9,7 @@ terraform {
 
 provider "aws" {}
 
-data "aws_region" "current" {
-  
-}
+data "aws_region" "current" {}
 
 data "aws_ami" "nats-server" {
   most_recent = true
@@ -62,10 +60,11 @@ locals {
   vpc_id     = local.create_vpc ? module.vpc.vpc_id : data.aws_vpc.provided[0].id
 }
 
-resource "random_id" "index" {
-  byte_length = 2
+resource "random_shuffle" "subnet_id" {
+  count = var.server_count
+  input = data.aws_subnets.target.ids
+  result_count = 1
 }
-
 resource "aws_security_group" "nats-ingress" {
   name        = "nats-server-ingress"
   description = "Allow inbound nats ports"
@@ -171,12 +170,9 @@ resource "aws_instance" "nats-server" {
   count                  = var.server_count
   ami                    = data.aws_ami.nats-server.id
   instance_type          = var.instance_type
-  subnet_id              = data.aws_subnets.target.ids[random_id.index.dec % length(data.aws_subnets.target.ids)]
+  subnet_id              = resource.random_shuffle.subnet_id[count.index].result[0]
   vpc_security_group_ids = [resource.aws_security_group.nats-ingress.id]
   iam_instance_profile   = aws_iam_instance_profile.nats-server.name
-  metadata_options {
-    instance_metadata_tags = true
-  }
   lifecycle {
     ignore_changes = [subnet_id]
   }

@@ -1,5 +1,23 @@
-#!/usr/bin/env bash
+Content-Type: multipart/mixed; boundary="//"
+MIME-Version: 1.0
 
+--//
+Content-Type: text/cloud-config; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: attachment; filename="cloud-config.txt"
+
+#cloud-config
+cloud_final_modules:
+- [scripts-user, always]
+
+--//
+Content-Type: text/x-shellscript; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: attachment; filename="userdata.txt"
+
+#!/usr/bin/env bash
 for srv in $(aws ec2 describe-instances --region ${SERVER_REGION} --filter Name=tag:TF_DEPLOYED_NATS,Values=nats* --query 'Reservations[*].Instances[*].{"dns":PublicDnsName}' | jq -r '.[][].dns'); do
     CLUSTER_ROUTES=$(cat <<EOL
         $${CLUSTER_ROUTES}
@@ -45,3 +63,4 @@ EOL
 cp /tmp/nats.config /opt/nats/nats.config
 systemctl enable nats-server
 systemctl start nats-server
+--//--
