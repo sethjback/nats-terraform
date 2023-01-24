@@ -47,10 +47,10 @@ data "template_file" "init" {
   count    = var.server_count
   template = file("${path.module}/init.tpl")
   vars = {
-    SERVER_INDEX = "${count.index}"
-    SERVER_REGION = "${data.aws_region.current.name}"
-    OPERATOR_JWT = "${var.operator_jwt}"
-    SYSTEM_ACCOUNT_ID = "${var.system_account_id}"
+    SERVER_INDEX       = "${count.index}"
+    SERVER_REGION      = "${data.aws_region.current.name}"
+    OPERATOR_JWT       = "${var.operator_jwt}"
+    SYSTEM_ACCOUNT_ID  = "${var.system_account_id}"
     SYSTEM_ACCOUNT_JWT = "${var.system_account_jwt}"
   }
 }
@@ -61,10 +61,11 @@ locals {
 }
 
 resource "random_shuffle" "subnet_id" {
-  count = var.server_count
-  input = data.aws_subnets.target.ids
+  count        = var.server_count
+  input        = data.aws_subnets.target.ids
   result_count = 1
 }
+
 resource "aws_security_group" "nats-ingress" {
   name        = "nats-server-ingress"
   description = "Allow inbound nats ports"
@@ -118,7 +119,6 @@ resource "aws_iam_policy" "list-ec2-instances" {
     }]
   })
 }
-
 
 resource "aws_iam_role" "nats-server" {
   name = "nats-server-ec2-role"
