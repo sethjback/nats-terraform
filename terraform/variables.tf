@@ -36,19 +36,16 @@ variable "instance_type" {
 
 variable "operator_jwt" {
   type        = string
-  default     = null
   description = "Operator JWT. Most easily generated via NSC. See https://docs.nats.io/using-nats/nats-tools/nsc"
 }
 
 variable "system_account_id" {
   type        = string
-  default     = ""
   description = "System Account ID. Most easily generated via NSC. See https://docs.nats.io/using-nats/nats-tools/nsc"
 }
 
 variable "system_account_jwt" {
   type        = string
-  default     = ""
   description = "System Account JWT, signed by provided operator. Most easily generated via NSC. See https://docs.nats.io/using-nats/nats-tools/nsc"
 }
 
